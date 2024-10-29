@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Consultas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>Mis Consultas</h2>
+        {% if consultas %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Clase Detectada</th>
+                        <th>Fecha y Hora</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for consulta in consultas %}
+                    <tr>
+                        <td>{{ consulta[0] }}</td>
+                        <td>{{ consulta[1].strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No tienes consultas registradas.</p>
+        {% endif %}
+        <!-- Cambia el enlace aquí -->
+        <a href="{{ url_for('imagenes') }}">Volver a la página de análisis</a>
+    </div>
+</body>
+</html>

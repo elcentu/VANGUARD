@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='logoVG.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Vanguard</title>
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-left">
+            <img src="{{ url_for('static', filename='logoVG.png') }}" alt="Logo">
+            <h1>Vanguard AI</h1>
+        </div>
+        <button class="menu-btn" onclick="toggleMenu()">☰</button>
+        <div class="menu" id="menu" style="display: none;">
+            <a href="/mis-consultas">Mis consultas</a>
+            <a href="/logout">Salir</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Sube una imagen o video para clasificarlo</h2>
+
+        <div class="upload-area">
+            <form id="uploadForm" method="POST" enctype="multipart/form-data">
+                <input type="file" name="media" accept="image/*,video/*" required onchange="submitForm()" id="mediaInput" style="display: none;">
+                <button type="button" class="upload-button" onclick="document.getElementById('mediaInput').click();">Subir Imagen o Video</button>
+            </form>            
+        </div>
+
+        <!-- Mostrar resultado si es una imagen -->
+        {% if media_type == 'image' %}
+        <div class="result">
+            <h2>Clase detectada: {{ class_name if class_name else "No se detectó ninguna clase" }}</h2>
+            <img src="{{ url_for('static', filename=media_path) }}" alt="Imagen Cargada" class="uploaded-image">
+            <!-- Botón de recomendaciones -->
+            <button onclick="getRecommendations(['{{ class_name }}'])" class="recommendation-button">Recomendaciones</button>
+        </div>
+
+        <!-- Mostrar resultados si es un video -->
+        {% elif media_type == 'video' %}
+        <h2>Resultados de los Frames del Video:</h2>
+        <div class="frames-gallery">
+            <!-- Obtener clases únicas -->
+            {% set unique_classes = frames_result | map(attribute='class_name') | unique | list %}
+            {% for frame in frames_result %}
+                <div class="frame">
+                    <img src="{{ url_for('static', filename=frame['frame_path']) }}" alt="Frame {{ loop.index }}" class="frame-image">
+                    <p>Clase: {{ frame['class_name'] }}</p>
+                </div>
+            {% endfor %}
+        </div>
+        <script>
+            // Enviar las clases únicas al JavaScript para recomendaciones
+            const uniqueClasses = {{ unique_classes | tojson }};
+        </script>
+        <!-- Botón de recomendaciones para video -->
+        <button onclick="getRecommendations(uniqueClasses)" class="recommendation-button">Recomendaciones</button>
+        {% endif %}
+
+        {% if error_message %}
+            <div class="error">{{ error_message }}</div>
+        {% endif %}
+    </div>
+
+    <!-- Ventana modal para mostrar recomendaciones -->
+    <div id="recommendationModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Recomendaciones</h2>
+            <div id="recommendationContent">
+                <!-- Aquí se mostrarán las recomendaciones -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function submitForm() {
+            document.getElementById('uploadForm').submit();
+        }
+
+        document.getElementById('mediaInput').addEventListener('change', function() {
+            const file = this.files[0];
+            if (file && file.size > 50 * 1024 * 1024) { // 50 MB máximo
+                alert("El archivo debe ser menor de 50 MB.");
+                this.value = "";
+            }
+        });
+
+        function toggleMenu() {
+            const menu = document.getElementById('menu');
+            menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+        }
+
+        function getRecommendations(classNames) {
+            fetch('/get_recommendations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ disease_names: classNames })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('recommendationContent').innerHTML = data.recommendations;
+                openModal();
+            })
+            .catch(error => console.error('Error fetching recommendations:', error));
+        }
+
+        function openModal() {
+            document.getElementById("recommendationModal").style.display = "flex";
+        }
+
+        function closeModal() {
+            document.getElementById("recommendationModal").style.display = "none";
+        }
+    </script>
+</body>
+</html>

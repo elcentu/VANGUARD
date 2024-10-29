@@ -1,0 +1,10 @@
+# Ignorar el entorno virtual
+venv/
+__pycache__/
+# Ignorar archivos de datos y modelos pesados
+grape_disease_model.h5
+
+
+# Ignorar subidas de imágenes o videos (si quieres excluir archivos específicos de esta carpeta)
+static/uploads/
+
